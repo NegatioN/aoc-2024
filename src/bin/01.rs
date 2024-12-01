@@ -1,28 +1,29 @@
 use std::collections::HashMap;
+use rayon::prelude::*;
 advent_of_code::solution!(1);
 
 fn parse_nums(input: &str) -> (Vec<u32>, Vec<u32>) {
-    let a: Vec<(u32, u32)> = input.split("\n").flat_map(|l| {
+    let sep: &str = "\n";
+    input.as_parallel_string().split(sep).flat_map(|l| {
         let a: Vec<_> = l.split(" ").collect();
-        Some((a.first()?.parse::<u32>().unwrap(), a.last()?.parse::<u32>().unwrap()))
-    }).collect();
-    (a.iter().map(|(a, b)| a.clone()).collect(), a.iter().map(|(a, b)| b.clone()).collect())
+        Some((a.first()?.parse::<u32>().ok()?, a.last()?.parse::<u32>().ok()?))
+    }).unzip()
 }
 
-pub fn part_one(input: &str) -> Option<u32> {
+pub fn part_one(input: &str) -> Option<u64> {
     let (mut left, mut right) = parse_nums(input);
-    left.sort();
-    right.sort();
-    Some(left.into_iter().zip(right).map(|(a, b)|  a.abs_diff(b)).sum())
+    left.par_sort();
+    right.par_sort();
+    Some(left.into_par_iter().zip(right).map(|(a, b)|  a.abs_diff(b) as u64).sum())
 }
 
-pub fn part_two(input: &str) -> Option<u32> {
-    let (mut left, mut right) = parse_nums(input);
-    let mut m: HashMap<u32, u32> = HashMap::new();
-    for &a in right.iter() {
-        *m.entry(a).or_insert(0) += 1;
+pub fn part_two(input: &str) -> Option<u64> {
+    let (left, right) = parse_nums(input);
+    let mut rm: HashMap<u32, u32> = HashMap::new();
+    for (a, b) in left.iter().zip(right) {
+        *rm.entry(b).or_insert(0) += 1;
     }
-    Some(left.iter().map(|&a| a * m.get(&a).unwrap_or(&0)).sum())
+    Some(left.par_iter().map(|&a| (a * rm.get(&a).unwrap_or(&0)) as u64).sum())
 }
 
 #[cfg(test)]
