@@ -12,16 +12,16 @@ fn parse_nums(input: &str) -> (Vec<u32>, Vec<u32>) {
 
 pub fn part_one(input: &str) -> Option<u64> {
     let (mut left, mut right) = parse_nums(input);
-    left.par_sort();
-    right.par_sort();
+    left.par_sort_unstable();
+    right.par_sort_unstable();
     Some(left.into_par_iter().zip(right).map(|(a, b)|  a.abs_diff(b) as u64).sum())
 }
 
 pub fn part_two(input: &str) -> Option<u64> {
     let (left, right) = parse_nums(input);
     let mut rm: HashMap<u32, u32> = HashMap::new();
-    for (a, b) in left.iter().zip(right) {
-        *rm.entry(b).or_insert(0) += 1;
+    for b in right.iter() {
+        *rm.entry(*b).or_insert(0) += 1;
     }
     Some(left.par_iter().map(|&a| (a * rm.get(&a).unwrap_or(&0)) as u64).sum())
 }
